@@ -4,9 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"github.com/whoiswentz/greenlight/cmd/api/application"
-	"github.com/whoiswentz/greenlight/cmd/api/configuration"
-	"github.com/whoiswentz/greenlight/cmd/api/controllers"
 	"net/http"
 	"time"
 )
@@ -14,23 +11,20 @@ import (
 const version = "1.0.0"
 
 func main() {
-	config := configuration.NewConfig()
+	config := NewConfig()
 
 	flag.IntVar(&config.Port, "port", 4000, "API server port")
 	flag.StringVar(&config.Env, "env", "development", "Environment (development|staging|production)")
 	flag.Parse()
 
-	logger := application.NewLogger("[MAIN] - ")
+	logger := NewLogger("[MAIN] - ")
 
-	app := application.NewApplication(version, config)
-
-	healthCheckHandler := controllers.NewHealthCheckController()
-	movieHandler := controllers.NewMovieHandler(&app)
+	app := NewApplication(version, config, logger)
 
 	mux := httprouter.New()
-	mux.HandlerFunc(http.MethodGet, "/v1/healthcheck", healthCheckHandler.GET(app))
-	mux.HandlerFunc(http.MethodPost, "/v1/movies", movieHandler.CreateMovie)
-	mux.HandlerFunc(http.MethodGet, "/v1/movies/:id", movieHandler.GetMovieByID)
+	mux.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.Check)
+	mux.HandlerFunc(http.MethodPost, "/v1/movies", app.CreateMovie)
+	mux.HandlerFunc(http.MethodGet, "/v1/movies/:id", app.GetMovieByID)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", config.Port),

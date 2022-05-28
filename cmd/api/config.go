@@ -1,4 +1,4 @@
-package configuration
+package main
 
 type Config struct {
 	Port int
